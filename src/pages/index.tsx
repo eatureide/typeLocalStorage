@@ -1,5 +1,8 @@
 import React from 'react';
+import TypeLocalStorage from '../typeLocalStorage';
 import styles from './index.less';
+
+new TypeLocalStorage(window.localStorage)
 
 export default () => {
   return (

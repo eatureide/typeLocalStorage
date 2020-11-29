@@ -10,11 +10,11 @@
 export default class LocalStorage {
   localStorage: any;
 
-  constructor() {
+  constructor(props: TypeLocalStorage.Init) {
     /**
      * this.localStorage改成构造函数传入
      */
-    this.localStorage = window.localStorage;
+    this.localStorage = props;
   }
 
   private checkRouterLimit = (router: string[]): any => {
@@ -79,9 +79,9 @@ export default class LocalStorage {
        */
       const isLegitimate = this.checkRouterLimit(itemConfig.routerLimit);
       if (!isLegitimate) {
-        throw Error(
-          `当前路由（${window.location.pathname}）不在${key}的routerLimit名单内，不允许赋值`,
-        );
+        console.warn(
+          `当前路由（${window.location.pathname}）不在${key}的routerLimit名单内，不允许赋值`
+        )
       }
     }
 
@@ -89,8 +89,8 @@ export default class LocalStorage {
       const index = item.type.indexOf(' ') + 1;
       const itemType = item.type.slice(index, -1);
       const transferValueType = transferValue.type.slice(index, -1);
-      throw Error(
-        `赋值的类型与目标值的类型不一致，原值类型是${itemType}，但赋值类型是${transferValueType}`,
+      console.warn(
+        `赋值的类型与目标值的类型不一致，原值类型是${itemType}，但赋值类型是${transferValueType}，此操作可能会令项目后续报错`
       );
     }
 

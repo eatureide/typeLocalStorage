@@ -1,4 +1,9 @@
 declare namespace TypeLocalStorage {
+
+  export interface Init {
+    value: any
+  }
+
   export interface ItemConfig {
     /**
      * 设置缓存规则
