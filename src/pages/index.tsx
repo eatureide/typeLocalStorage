@@ -2,7 +2,7 @@ import React from 'react';
 import TypeLocalStorage from '../typeLocalStorage';
 import styles from './index.less';
 
-new TypeLocalStorage(window.localStorage)
+window.TypeLocalStorage = new TypeLocalStorage(window.localStorage);
 
 export default () => {
   return (
@@ -10,4 +10,4 @@ export default () => {
       <h1 className={styles.title}>Page index</h1>
     </div>
   );
-}
+};

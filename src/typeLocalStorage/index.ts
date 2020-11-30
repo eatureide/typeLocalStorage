@@ -2,35 +2,21 @@
  * Feature
  * 赋值前的类型检查
  * 设置缓存过期时间
- * 设置允许获取缓存的页面
  */
-
-// 根据平台封装不同的类
 
 export default class LocalStorage {
   localStorage: any;
 
-  constructor(props: TypeLocalStorage.Init) {
-    /**
-     * this.localStorage改成构造函数传入
-     */
+  constructor(props: any) {
     this.localStorage = props;
   }
 
-  private checkRouterLimit = (router: string[]): any => {
-    /**
-     * 检查结果是否符合目标值的路由规则
-     */
-    const resultRouterLimit = router;
-    return resultRouterLimit.includes(window.location.pathname);
-  };
-
-  private checkValueTime = (endTime: number) => {
+  private checkValueTime = (endTime: number): boolean => {
     /**
      * 检查当前值是否过期
      */
     const currTime: number = new Date().valueOf();
-    return endTime && currTime >= endTime;
+    return currTime >= endTime;
   };
 
   private transferItemConfig = (key: string): TypeLocalStorage.ItemConfig => {
@@ -41,8 +27,7 @@ export default class LocalStorage {
       this.localStorage.getItem(`${key}_config`) || '{}',
     );
     const result = {
-      endTime: itemConfig.endTime ? Number(itemConfig.endTime) : null,
-      routerLimit: itemConfig.routerLimit || null,
+      endTime: itemConfig.endTime ? Number(itemConfig.endTime) : undefined,
     };
 
     return result;
@@ -51,7 +36,6 @@ export default class LocalStorage {
   private transferItem = (key: string): TypeLocalStorage.setItem => {
     /**
      * 解析缓存
-     * 返回的value也需要解析
      */
     const item = JSON.parse(this.localStorage.getItem(key) || '{}');
     return item;
@@ -61,69 +45,44 @@ export default class LocalStorage {
     /**
      * 设置缓存
      */
-    /**
-     * 通过参数去控制是否可以赋值，默认可以赋值，如果类型不同，则改为警告
-     */
     const item: TypeLocalStorage.setItem = this.transferItem(key);
-    const itemConfig = this.transferItemConfig(key);
+    const type = Object.prototype.toString.call(value);
+    const space = type.indexOf(' ') + 1;
 
     const transferValue: TypeLocalStorage.setItem = {
       value,
-      type: Object.prototype.toString.call(value),
+      type: type.slice(space, -1).toLocaleLowerCase(),
     };
 
-    if (itemConfig.routerLimit) {
-      /**
-       * 检查当前路由是否在合缓存设置的路由名单内
-       * 如果当前路由不在名单内则不允许赋值
-       */
-      const isLegitimate = this.checkRouterLimit(itemConfig.routerLimit);
-      if (!isLegitimate) {
-        console.warn(
-          `当前路由（${window.location.pathname}）不在${key}的routerLimit名单内，不允许赋值`
-        )
-      }
-    }
-
     if (item.value && item.type && item.type !== transferValue.type) {
-      const index = item.type.indexOf(' ') + 1;
-      const itemType = item.type.slice(index, -1);
-      const transferValueType = transferValue.type.slice(index, -1);
+      /**
+       * 当前缓存的类型与设置的类型不相同时则警告
+       */
       console.warn(
-        `赋值的类型与目标值的类型不一致，原值类型是${itemType}，但赋值类型是${transferValueType}，此操作可能会令项目后续报错`
+        `赋值的类型与目标值的类型不一致，原值类型是${item.type}，但赋值类型是${transferValue.type}，此操作可能会令项目后续运行崩溃`,
       );
     }
 
-    if ((config && itemConfig.endTime) || (config && itemConfig.routerLimit)) {
-      throw Error(`缓存规则不允许修改`);
-    }
-
     if (config) {
+      const { endTime } = config;
+      if (endTime) {
+        if (!Number(endTime)) {
+          throw Error(`${endTime}不是数字类型`);
+        }
+        config.endTime = new Date().valueOf() + endTime;
+      }
       this.localStorage.setItem(`${key}_config`, JSON.stringify({ ...config }));
     }
 
     this.localStorage.setItem(key, JSON.stringify(transferValue));
   }
 
-  getItem(key: string): string {
+  getItem(key: string): any {
     /**
      * 获取缓存
      */
     const item: TypeLocalStorage.setItem = this.transferItem(key);
     const itemConfig = this.transferItemConfig(key);
-
-    if (itemConfig.routerLimit) {
-      /**
-       * 检查当前路由是否在合缓存设置的路由名单内
-       * 如果当前路由不在名单内则不允许获取
-       */
-      const isLegitimate = this.checkRouterLimit(itemConfig.routerLimit);
-      if (!isLegitimate) {
-        throw Error(
-          `当前路由（${window.location.pathname}）不在${key}的routerLimit名单内，不允许获取`,
-        );
-      }
-    }
 
     if (itemConfig.endTime) {
       /**
@@ -131,10 +90,11 @@ export default class LocalStorage {
        */
       const isExpired = this.checkValueTime(itemConfig.endTime);
       if (isExpired) {
+        console.warn(`${key}已过期`);
         this.removeItem(key);
         this.removeItem(`${key}_config`);
       }
-      return isExpired ? item.value : null;
+      return isExpired ? null : item.value;
     }
 
     return item.value;

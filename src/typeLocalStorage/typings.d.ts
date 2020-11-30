@@ -1,23 +1,14 @@
 declare namespace TypeLocalStorage {
-
   export interface Init {
-    value: any
+    value: any;
   }
 
   export interface ItemConfig {
     /**
      * 设置缓存规则
      */
-    endTime?: number | null;
-    routerLimit?: string[] | null;
-  }
-
-  export interface GetItemConfig {
-    /**
-     * 获取缓存规则
-     */
-    endTime?: string;
-    routerLimit?: string;
+    endTime?: number;
+    protect?: boolean;
   }
 
   export interface setItem {
@@ -34,12 +25,5 @@ declare namespace TypeLocalStorage {
      */
     value: string;
     type: string;
-  }
-
-  export interface LocalStorageProperty {
-    setItem: (key: string, value: any, config?: ItemConfig) => void;
-    getItem: (key: string) => any;
-    removeItem: (key: string) => any;
-    [propName: string]: any;
   }
 }
