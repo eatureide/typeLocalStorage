@@ -10,5 +10,5 @@ declare module '*.svg' {
 }
 
 interface Window {
-  TypeLocalStorage: any;
+  Aliplayer: any;
 }
