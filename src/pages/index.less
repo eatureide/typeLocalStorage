@@ -4,20 +4,21 @@
 }
 
 .swiper-slide {
+  background-size: cover !important;
   .playerBox {
     background-size: cover !important;
-  }
-  .show {
-    opacity: 1;
-  }
-  .hide {
-    opacity: 0;
+    height: 100%;
   }
   .prism-player {
     background: none !important;
   }
+  .prism-big-play-btn {
+    opacity: 0;
+  }
   video {
     object-fit: cover;
     object-position: center;
+    visibility: hidden;
+    // display: none;
   }
 }

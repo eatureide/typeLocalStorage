@@ -11,4 +11,5 @@ declare module '*.svg' {
 
 interface Window {
   Aliplayer: any;
+  Swiper: any;
 }
