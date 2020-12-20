@@ -5,6 +5,9 @@ import './index.less';
 
 import mock from './mock';
 
+const transParent =
+  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
 export default class VideoCarsouel extends React.Component {
   player: any = null;
   swiper: any = null;
@@ -19,59 +22,91 @@ export default class VideoCarsouel extends React.Component {
     },
   };
 
-  handleSetPlayer = () => {
-    const { carsouelData } = this.state;
-    const { realIndex } = this.swiper;
-    const transParent =
-      'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  handleSetPlayer = (
+    id: string,
+    videoData: { vid: string; playauth: string; cover: string },
+  ) => {
+    return new window.Aliplayer({
+      id,
+      ...videoData,
+      qualitySort: 'asc',
+      format: 'mp4',
+      mediaType: 'video',
+      width: '100%',
+      height: '100%',
+      autoplay: false,
+      isLive: false,
+      rePlay: false,
+      playsinline: true,
+      preload: true,
+      controlBarVisibility: 'hover',
+      useH5Prism: true,
+    });
+  };
 
-    const setTransParent = () => {
-      const node: any = document.getElementById('player-1');
+  handleSetVideoTransParent = (id: string) => {
+    const node: any = document.getElementById(id);
+    if (node) {
       const videoNode = node.firstChild;
       videoNode.setAttribute('poster', transParent);
       videoNode.style.visibility = 'visible';
+    }
+  };
+
+  handleSlideChange = () => {
+    /**
+     * slider后的回调，每个slider滑动后都一定会重置到底二个slider已达到虚拟滚动的效果，所以只需要传player-1即可
+     */
+
+    const realIndex = this.swiper.realIndex || 0;
+    const carsouelData = this.state.carsouelData;
+    const currVideo: any = carsouelData[realIndex];
+    const playerData = {
+      vid: currVideo.videoId,
+      playauth: currVideo.playAuth,
+      cover: transParent,
     };
 
-    const resetPlayer = () => {
-      const currVideo: any = carsouelData[realIndex];
-      const player = new window.Aliplayer({
-        id: realIndex === 0 ? 'player-0' : 'player-1',
-        vid: currVideo.videoId,
-        playauth: currVideo.playAuth,
-        cover: transParent,
-        qualitySort: 'asc',
-        format: 'mp4',
-        mediaType: 'video',
-        width: '100%',
-        height: '100%',
-        autoplay: false,
-        isLive: false,
-        rePlay: false,
-        playsinline: true,
-        preload: true,
-        controlBarVisibility: 'hover',
-        useH5Prism: true,
-      });
-
-      this.player = player;
-
+    if (!this.player) {
+      this.player = this.handleSetPlayer('player-1', playerData);
       this.player.on('init', () => {
-        setTransParent();
+        this.handleSetVideoTransParent('player-1');
       });
-
       this.player.on('ready', () => {
-        setTransParent();
+        this.handleSetVideoTransParent('player-1');
         this.player.play();
       });
-    };
-
-    if (this.player) {
-      const currVideo: any = carsouelData[realIndex];
-      this.player.pause();
-      this.player.replayByVidAndPlayAuth(currVideo.videoId, currVideo.playAuth);
-    } else {
-      resetPlayer();
+      return;
     }
+    if (this.initialPlayer) {
+      this.initialPlayer.pause();
+    }
+    this.player.pause();
+    this.player.replayByVidAndPlayAuth(currVideo.videoId, currVideo.playAuth);
+  };
+
+  handleSetInitialPlayer = () => {
+    /**
+     * 设置初始player，用于第一个slider
+     */
+    const realIndex = this.swiper.realIndex || 0;
+    const carsouelData = this.state.carsouelData;
+    const currVideo: any = carsouelData[realIndex];
+    const playerData = {
+      vid: currVideo.videoId,
+      playauth: currVideo.playAuth,
+      cover: transParent,
+    };
+    if (!this.initialPlayer) {
+      this.initialPlayer = this.handleSetPlayer('player-0', playerData);
+      return;
+    }
+    if (this.player) {
+      this.player.pause();
+    }
+    this.handleSetVideoTransParent('player-0');
+    this.initialPlayer.pause();
+    this.initialPlayer.play();
   };
 
   handleGetVideoList = () => {
@@ -89,7 +124,16 @@ export default class VideoCarsouel extends React.Component {
       direction: 'vertical',
       on: {
         slideChangeTransitionEnd: (e: any) => {
-          this.handleSetPlayer();
+          if (this.swiper.realIndex !== 0) {
+            this.handleSlideChange();
+            return;
+          }
+          this.handleSetInitialPlayer();
+        },
+        init: () => {
+          setTimeout(() => {
+            this.handleSetInitialPlayer();
+          }, 800);
         },
       },
       virtual: {
